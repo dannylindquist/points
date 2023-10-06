@@ -1,15 +1,11 @@
-import { computed, effect } from "@preact/signals-core";
+import { ReadonlySignal, Signal, computed, effect } from "@preact/signals-core";
 
 export { signal, computed, effect } from "@preact/signals-core";
 
 const noop = () => {};
 
-class BoundElement extends HTMLHtmlElement {
-  cleanups: (() => void)[] = [];
-}
-
-let initializingElements: BoundElement[] = [];
-const currentElement = () =>
+let initializingElements: ((()=>void)[])[] = [];
+const currentElementEffects = () =>
   initializingElements[initializingElements.length - 1];
 
 export function text(el: HTMLElement, callback: () => string) {
@@ -18,9 +14,17 @@ export function text(el: HTMLElement, callback: () => string) {
     return noop;
   }
   const boundContent = computed(callback);
-  currentElement()?.cleanups.push(
+  currentElementEffects()?.push(
     effect(() => {
       el.textContent = boundContent.value;
+    })
+  );
+}
+
+export function watch<T>(signal: Signal<T> | ReadonlySignal<T>, callback: (value:T) => void) {
+  currentElementEffects()?.push(
+    effect(() => {
+      callback(signal.value);
     })
   );
 }
@@ -36,23 +40,25 @@ export function clickAway(el: HTMLElement, callback: () => void) {
     callback();
   }
   window.addEventListener("click", clickHandler);
-  currentElement()?.cleanups.push(() =>
+  currentElementEffects()?.push(() =>
     window.removeEventListener("click", clickHandler)
   );
 }
 
-export function on(
+export function on<T extends keyof HTMLElementEventMap>(
   target: EventTarget,
-  event: keyof HTMLElementEventMap | string,
-  handler: () => {},
+  event: T,
+  handler: (event: HTMLElementEventMap[T]) => void,
   options?: EventListenerOptions
 ) {
   if (!target) {
     console.error(`undefined element passed to 'bind:on:${event}'`);
     return noop;
   }
+  // @ts-ignore this works
   target.addEventListener(event, handler, options);
-  currentElement()?.cleanups.push(() =>
+  currentElementEffects()?.push(() =>
+  // @ts-ignore this works
     target.removeEventListener(event, handler, options)
   );
 }
@@ -63,7 +69,7 @@ export function show(el: HTMLElement, predicate: () => boolean) {
     return noop;
   }
   const shouldShow = computed(predicate);
-  currentElement()?.cleanups.push(
+  currentElementEffects()?.push(
     effect(() => {
       if (!shouldShow.value) {
         el.style.display = "none";
@@ -92,22 +98,21 @@ function generateRefProxy(refs: Record<string, HTMLElement>, tagName: string) {
 
 export function define(
   tagName: string,
-  setup: (params: SetupParams) => (() => void)[] | undefined
+  setup: (params: SetupParams) => void
 ) {
-  const component = class extends BoundElement {
-    constructor() {
-      super();
-    }
+  const component = class extends HTMLElement {
+    cleanups: (() => void)[] = [];
     connectedCallback() {
-      const refs = Array.from(this.querySelectorAll("[data-ref]")).reduce(
+      const refElements = Array.from(this.querySelectorAll<HTMLElement>("[data-ref]"));
+      const refs = refElements.reduce(
         (agg, val: HTMLElement) => {
           agg[val.dataset.ref!] = val;
           return agg;
         },
         {} as Record<string, HTMLElement>
       ) as unknown as Record<string, HTMLElement>;
-      initializingElements.push(this);
-      setup({ refs: generateRefProxy(refs, tagName), el: this }) ?? [];
+      initializingElements.push(this.cleanups);
+      setup({ refs: generateRefProxy(refs, tagName), el: this });
       initializingElements.pop();
     }
     disconnectedCallback() {

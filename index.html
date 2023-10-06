@@ -10,8 +10,8 @@
   </head>
   <body class="bg-black text-white p-4 font-mono">
     <h1 class="text-4xl font-black">Points</h1>
-    <div class="py-4">
-      <form data-component="player-add">
+    <points-player-add class="py-6">
+      <form data-ref="form">
         <label class="block" for="playerName">Name:</label>
         <input
           class="bg-gray-700 p-2 rounded mt-2 border border-gray-400"
@@ -25,8 +25,8 @@
           value="Add"
         />
       </form>
-    </div>
-    <div class="max-w-sm space-y-3" data-component="player-list"></div>
+    </points-player-add>
+    <points-player-list class="max-w-sm space-y-3"></points-player-list>
     <dialog
       class="backdrop:opacity-30 backdrop:bg-black bg-transparent"
       data-component="player-dialog"
