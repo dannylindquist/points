@@ -10,7 +10,7 @@
   </head>
   <body class="bg-black text-white p-4 font-mono">
     <h1 class="text-4xl font-black">Points</h1>
-    <points-player-add class="py-6">
+    <points-player-add class="block py-6">
       <form data-ref="form">
         <label class="block" for="playerName">Name:</label>
         <input
@@ -26,49 +26,52 @@
         />
       </form>
     </points-player-add>
-    <points-player-list class="max-w-sm space-y-3"></points-player-list>
-    <dialog
-      class="backdrop:opacity-30 backdrop:bg-black bg-transparent"
-      data-component="player-dialog"
-    >
-      <div
-        data-wrapper
-        class="relative bg-black text-white px-4 py-8 border rounded-md border-gray-400"
+    <points-player-list class="block max-w-sm space-y-3"></points-player-list>
+    <points-edit-modal>
+      <dialog
+        data-ref="dialog"
+        class="backdrop:opacity-30 backdrop:bg-black bg-transparent"
+        data-component="player-dialog"
       >
-        <button
-          data-action="close"
-          class="absolute top-0 right-0 h-8 w-8 border mr-2 mt-2"
-          aria-label="Close dialog"
+        <div
+          data-ref="wrapper"
+          class="relative bg-black text-white px-4 py-8 border rounded-md border-gray-400"
         >
-          &times;
-        </button>
-        <div data-bind="name"></div>
-        <form>
-          <input type="hidden" name="playerId" />
-          <input
-            class="bg-gray-700 p-2 rounded mt-2 border border-gray-400"
-            type="number"
-            inputmode="numeric"
-            name="score-change"
-          />
-          <div class="flex items-center gap-1 pt-4">
-            <button
-              class="bg-gray-700 p-2 rounded px-4"
-              type="submit"
-              value="add"
-            >
-              Add
-            </button>
-            <button
-              class="bg-gray-700 p-2 rounded px-4"
-              type="submit"
-              value="subtract"
-            >
-              Subtract
-            </button>
-          </div>
-        </form>
-      </div>
-    </dialog>
+          <button
+            data-ref="closeButton"
+            class="absolute top-0 right-0 h-8 w-8 border mr-2 mt-2"
+            aria-label="Close dialog"
+          >
+            &times;
+          </button>
+          <div data-ref="name"></div>
+          <form data-ref="changeForm">
+            <input data-ref="playerId" type="hidden" name="playerId" />
+            <input
+              class="bg-gray-700 p-2 rounded mt-2 border border-gray-400"
+              type="number"
+              inputmode="numeric"
+              name="score-change"
+            />
+            <div class="flex items-center gap-1 pt-4">
+              <button
+                class="bg-gray-700 p-2 rounded px-4"
+                type="submit"
+                value="add"
+              >
+                Add
+              </button>
+              <button
+                class="bg-gray-700 p-2 rounded px-4"
+                type="submit"
+                value="subtract"
+              >
+                Subtract
+              </button>
+            </div>
+          </form>
+        </div>
+      </dialog>
+    </points-edit-modal>
   </body>
 </html>
