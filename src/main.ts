@@ -1,7 +1,3 @@
-import { effect, signal } from "@preact/signals-core";
-import { get, set } from "idb-keyval";
-import { define, on, watch } from "./lib/bind";
-
-
-
-
+import "./elements/add-form";
+import "./elements/edit-modal";
+import "./elements/player-list";

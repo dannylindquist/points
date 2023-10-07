@@ -4,7 +4,7 @@ export { signal, computed, effect } from "@preact/signals-core";
 
 const noop = () => {};
 
-let initializingElements: ((()=>void)[])[] = [];
+let initializingElements: (() => void)[][] = [];
 const currentElementEffects = () =>
   initializingElements[initializingElements.length - 1];
 
@@ -21,12 +21,8 @@ export function text(el: HTMLElement, callback: () => string) {
   );
 }
 
-export function watch<T>(signal: Signal<T> | ReadonlySignal<T>, callback: (value:T) => void) {
-  currentElementEffects()?.push(
-    effect(() => {
-      callback(signal.value);
-    })
-  );
+export function watch(callback: () => void) {
+  currentElementEffects()?.push(effect(callback));
 }
 
 export function clickAway(el: HTMLElement, callback: () => void) {
@@ -45,6 +41,18 @@ export function clickAway(el: HTMLElement, callback: () => void) {
   );
 }
 
+export function onCustomEvent<T>(
+  event: string,
+  handler: (event: CustomEvent<T>) => void
+) {
+  // @ts-ignore this works
+  window.addEventListener(event, handler);
+  currentElementEffects()?.push(() =>
+    // @ts-ignore this works
+    window.removeEventListener(event, handler)
+  );
+}
+
 export function on<T extends keyof HTMLElementEventMap>(
   target: EventTarget,
   event: T,
@@ -58,7 +66,7 @@ export function on<T extends keyof HTMLElementEventMap>(
   // @ts-ignore this works
   target.addEventListener(event, handler, options);
   currentElementEffects()?.push(() =>
-  // @ts-ignore this works
+    // @ts-ignore this works
     target.removeEventListener(event, handler, options)
   );
 }
@@ -96,21 +104,20 @@ function generateRefProxy(refs: Record<string, HTMLElement>, tagName: string) {
   });
 }
 
-export function define(
-  tagName: string,
-  setup: (params: SetupParams) => void
-) {
+export function define(tagName: string, setup: (params: SetupParams) => void) {
   const component = class extends HTMLElement {
     cleanups: (() => void)[] = [];
     connectedCallback() {
-      const refElements = Array.from(this.querySelectorAll<HTMLElement>("[data-ref]"));
-      const refs = refElements.reduce(
-        (agg, val: HTMLElement) => {
-          agg[val.dataset.ref!] = val;
-          return agg;
-        },
-        {} as Record<string, HTMLElement>
-      ) as unknown as Record<string, HTMLElement>;
+      const refElements = Array.from(
+        this.querySelectorAll<HTMLElement>("[data-ref]")
+      );
+      const refs = refElements.reduce((agg, val: HTMLElement) => {
+        agg[val.dataset.ref!] = val;
+        return agg;
+      }, {} as Record<string, HTMLElement>) as unknown as Record<
+        string,
+        HTMLElement
+      >;
       initializingElements.push(this.cleanups);
       setup({ refs: generateRefProxy(refs, tagName), el: this });
       initializingElements.pop();
