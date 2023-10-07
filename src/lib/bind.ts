@@ -1,4 +1,4 @@
-import { ReadonlySignal, Signal, computed, effect } from "@preact/signals-core";
+import { computed, effect } from "@preact/signals-core";
 
 export { signal, computed, effect } from "@preact/signals-core";
 
