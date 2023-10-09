@@ -15,13 +15,15 @@ function createPlayer(name: string) {
   };
 }
 
-const currentSave = (await get("playerList")) || [];
-
-class PlayerStore {
+export class PlayerStore {
   players: Signal<Player[]>;
 
   constructor(initialValue?: Player[]) {
     this.players = signal<Player[]>(initialValue ?? []);
+  }
+
+  async init() {
+    this.players.value = (await get("playerList")) || [];
     effect(() => {
       set("playerList", this.players.value);
     });
@@ -29,6 +31,10 @@ class PlayerStore {
 
   get value() {
     return this.players.value;
+  }
+
+  clear() {
+    this.players.value = [];
   }
 
   addPlayer(name: string) {
@@ -42,5 +48,3 @@ class PlayerStore {
     this.players.value = players;
   }
 }
-
-export const store = new PlayerStore(currentSave);

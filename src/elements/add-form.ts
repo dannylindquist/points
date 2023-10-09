@@ -1,21 +1,16 @@
-import { define, on } from "../lib/bind";
-import { store } from "../playerStore";
+import { define, onSubmit } from "../lib/bind";
 
 define("points-player-add", ({ refs }) => {
-  const { form } = refs;
+  const { form } = refs as { form: HTMLFormElement };
 
-  on(form, "submit", (event) => {
+  onSubmit(form as HTMLFormElement, (values, event) => {
     event.preventDefault();
-    if (!(event.target instanceof HTMLFormElement)) {
-      return;
-    }
-    const data = new FormData(event.target);
-    const name = data.get("name");
-
+    const name = values["name"];
     if (typeof name === "string") {
-      store.addPlayer(name);
+      form.dispatchEvent(
+        new CustomEvent("app:add-player", { detail: name, bubbles: true })
+      );
     }
-
-    event.target.reset();
+    form.reset();
   });
 });

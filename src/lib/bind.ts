@@ -71,6 +71,18 @@ export function on<T extends keyof HTMLElementEventMap>(
   );
 }
 
+type SubmitHandler = (values: Record<string, any>, event: SubmitEvent) => void;
+export function onSubmit(form: HTMLFormElement, handler: SubmitHandler) {
+  const submitHandler = (event: SubmitEvent) => {
+    const values = Object.fromEntries(new FormData(form).entries());
+    handler(values, event);
+  };
+  form.addEventListener("submit", submitHandler);
+  currentElementEffects()?.push(() =>
+    form.removeEventListener("submit", submitHandler)
+  );
+}
+
 export function show(el: HTMLElement, predicate: () => boolean) {
   if (!el) {
     console.error(`undefined element passed to 'bind:show'`);

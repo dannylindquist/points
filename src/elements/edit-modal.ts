@@ -1,5 +1,12 @@
-import { define, on, onCustomEvent, signal, text, watch } from "../lib/bind";
-import { Player, store } from "../playerStore";
+import {
+  define,
+  on,
+  onCustomEvent,
+  onSubmit,
+  signal,
+  watch,
+} from "../lib/bind";
+import { Player } from "../playerStore";
 
 define("points-edit-modal", ({ refs }) => {
   const {
@@ -22,11 +29,11 @@ define("points-edit-modal", ({ refs }) => {
     }
   });
 
-  text(name, () => editingPlayer.value?.name ?? "");
   watch(() => {
     const value = editingPlayer.value;
     if (value) {
       (playerId as HTMLInputElement).value = value.id;
+      name.textContent = value.name;
     }
   });
 
@@ -39,29 +46,36 @@ define("points-edit-modal", ({ refs }) => {
     (dialog as HTMLDialogElement).showModal();
   });
 
-  on(changeForm, "submit", (event) => {
+  onSubmit(changeForm as HTMLFormElement, (values, event) => {
     event.preventDefault();
     // @ts-ignore it works
     const action = event.submitter!.value;
-    const data = new FormData(event.target as HTMLFormElement);
-    let score = +(data.get("score-change") || 0);
+    let score = +(values["score-change"] || 0);
     if (action === "subtract") {
       score *= -1;
     }
-    const playerId = data.get("playerId");
-    const items = [...store.players.value];
-    const foundPlayer = items.find((item) => item.id == playerId);
-    if (foundPlayer) {
-      foundPlayer.score += +(score ?? 0);
-      store.players.value = items;
-      (event.target as HTMLFormElement).reset();
-      (dialog as HTMLDialogElement).close();
-    }
+    const playerId = values["playerId"];
+    changeForm.dispatchEvent(
+      new CustomEvent("app:update-score", {
+        detail: {
+          playerId: playerId,
+          scoreChange: score,
+        },
+        bubbles: true,
+      })
+    );
+    (event.target as HTMLFormElement).reset();
+    (dialog as HTMLDialogElement).close();
   });
 
   on(removePlayer, "click", () => {
     if (editingPlayer.value) {
-      store.removePlayer(editingPlayer.value?.id);
+      removePlayer.dispatchEvent(
+        new CustomEvent("app:remove-player", {
+          detail: editingPlayer.value?.id,
+          bubbles: true,
+        })
+      );
       (dialog as HTMLDialogElement).close();
     }
   });
